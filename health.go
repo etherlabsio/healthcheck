@@ -15,6 +15,16 @@ type (
 		Check() error
 	}
 
+	// CheckFunc is a convenience type to create functions that implement
+	// the Checker interface
+	CheckerFunc func() error
+
+	// Check Implements the Checker interface to allow for any func() error method
+	// to be passed as a Checker
+	func (c CheckerFunc) Check() error {
+		return c()
+	}
+
 	health struct {
 		checkers map[string]Checker
 	}
