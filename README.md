@@ -1,5 +1,7 @@
 # Health
 
+A simple and extensible RESTful Healthcheck API implementation for Go services.
+
 Health provides an `http.Handlefunc` for use as a healthcheck endpoint used bu external services or loadbalancers
 for determining the health of the application and to remove the application host or container out of rotation in case it is found to be unhealthy.
 

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	health "github.com/etherlabsio/healthcheck"
+	"github.com/etherlabsio/healthcheck"
 )
 
 type heartbeat struct {
@@ -22,7 +22,7 @@ func (h *heartbeat) Check() error {
 
 // Heartbeat returns a heartbeat health checker. Heartbeat files are generally used to take hosts out of rotation from the loadbalancers.
 // Removing the heartbeat file allows you to debug the application host in case of failures.
-func Heartbeat(filepath string) health.Checker {
+func Heartbeat(filepath string) healthcheck.Checker {
 	return &heartbeat{absFilePath(filepath)}
 }
 

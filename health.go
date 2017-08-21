@@ -1,4 +1,4 @@
-package health
+package healthcheck
 
 import (
 	"encoding/json"
@@ -6,6 +6,15 @@ import (
 )
 
 type (
+	health struct {
+		checkers map[string]Checker
+	}
+
+	response struct {
+		Status string            `json:"status,omitempty"`
+		Errors map[string]string `json:"errors,omitempty"`
+	}
+
 	// Option adds optional parameter for the HealthcheckHandlerFunc
 	Option func(*health)
 
@@ -16,23 +25,20 @@ type (
 	}
 
 	// CheckFunc is a convenience type to create functions that implement
-	// the Checker interface
+	// the Checker interface.
+	// Shoutout to https://github.com/docker/go-healthcheck for this tip :)
 	CheckerFunc func() error
-
-	// Check Implements the Checker interface to allow for any func() error method
-	// to be passed as a Checker
-	func (c CheckerFunc) Check() error {
-		return c()
-	}
-
-	health struct {
-		checkers map[string]Checker
-	}
 )
+
+// Check Implements the Checker interface to allow for any func() error method
+// to be passed as a Checker
+func (c CheckerFunc) Check() error {
+	return c()
+}
 
 func (h *health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	code := http.StatusOK
-	var errorMsgs map[string]string
+	errorMsgs := make(map[string]string, len(h.checkers))
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	for key, checker := range h.checkers {
 		if err := checker.Check(); err != nil {
@@ -41,28 +47,18 @@ func (h *health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(struct {
-		Status string            `json:"status,omitempty"`
-		Errors map[string]string `json:"errors,omitempty"`
-	}{
+	json.NewEncoder(w).Encode(response{
 		Status: http.StatusText(code),
 		Errors: errorMsgs,
 	})
 }
 
 func new(opts ...Option) *health {
-	h := &health{
-		checkers: make(map[string]Checker),
-	}
+	h := &health{make(map[string]Checker)}
 	for _, opt := range opts {
 		opt(h)
 	}
 	return h
-}
-
-// NewHandlerFunc returns a http.Handler
-func NewHandlerFunc(opts ...Option) http.Handler {
-	return new(opts...)
 }
 
 // NewHandler returns a http.Handler
