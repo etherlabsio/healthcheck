@@ -24,11 +24,18 @@ type (
 		Check() error
 	}
 
-	// CheckFunc is a convenience type to create functions that implement
-	// the Checker interface.
-	// Shoutout to https://github.com/docker/go-healthcheck for this tip :)
+	// CheckerFunc is a convenience type to create functions that implement the Checker interface. Shoutout to https://github.com/docker/go-healthcheck for this tip :)
 	CheckerFunc func() error
 )
+
+// HandlerFunc returns a http.Handler
+func HandlerFunc(opts ...Option) http.HandlerFunc {
+	h := health{make(map[string]Checker)}
+	for _, opt := range opts {
+		opt(&h)
+	}
+	return h.ServeHTTP
+}
 
 // Check Implements the Checker interface to allow for any func() error method
 // to be passed as a Checker
@@ -36,7 +43,14 @@ func (c CheckerFunc) Check() error {
 	return c()
 }
 
-func (h *health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// WithChecker adds a status checker that needs to be added as part of healthcheck. i.e database, cache or any external dependency
+func WithChecker(name string, s Checker) Option {
+	return func(h *health) {
+		h.checkers[name] = s
+	}
+}
+
+func (h health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	code := http.StatusOK
 	errorMsgs := make(map[string]string, len(h.checkers))
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -51,24 +65,4 @@ func (h *health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Status: http.StatusText(code),
 		Errors: errorMsgs,
 	})
-}
-
-func new(opts ...Option) *health {
-	h := &health{make(map[string]Checker)}
-	for _, opt := range opts {
-		opt(h)
-	}
-	return h
-}
-
-// NewHandler returns a http.Handler
-func NewHandler(opts ...Option) http.HandlerFunc {
-	return new(opts...).ServeHTTP
-}
-
-// WithChecker adds a status checker that needs to be added as part of healthcheck. i.e database, cache or any external dependency
-func WithChecker(name string, s Checker) Option {
-	return func(h *health) {
-		h.checkers[name] = s
-	}
 }

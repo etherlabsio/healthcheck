@@ -53,7 +53,7 @@ func TestNewHandlerFunc(t *testing.T) {
 			if err != nil {
 				t.Errorf("Failed to create request.")
 			}
-			NewHandler(tt.args...)(res, req)
+			HandlerFunc(tt.args...)(res, req)
 			if res.Code != tt.statusCode {
 				t.Errorf("expected code %d, got %d", tt.statusCode, res.Code)
 			}
