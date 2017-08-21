@@ -7,8 +7,8 @@ jobs:
     docker:
       # specify the version
       - image: circleci/golang:1.8
-      
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+
+    working_directory: /go/src/github.com/etherlabs.io/healthcheck
     steps:
       - checkout
 
