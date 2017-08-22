@@ -15,7 +15,7 @@ type heartbeat struct {
 
 func (h *heartbeat) Check() error {
 	if _, err := os.Stat(h.path); err != nil {
-		return errors.New("heartbeat not found. service could be taken out of rotation")
+		return errors.New("heartbeat not found. application should be out of rotation")
 	}
 	return nil
 }

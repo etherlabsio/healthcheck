@@ -1,4 +1,4 @@
-# Health
+# Healthcheck API [![CircleCI](https://circleci.com/gh/etherlabsio/healthcheck/tree/master.svg?style=svg)](https://circleci.com/gh/etherlabsio/healthcheck/tree/master) [![Go Report Card](https://goreportcard.com/badge/github.com/etherlabsio/healthcheck)](https://goreportcard.com/report/github.com/etherlabsio/healthcheck)
 
 A simple and extensible RESTful Healthcheck API implementation for Go services.
 
