@@ -14,9 +14,46 @@ By implementing the `Checker` interface and passing it on to healthcheck allows 
 ```GO
     package main
 
-    import "github.com/gorilla/mux"
+    import (
+        "database/sql"
+        "net/http"
+
+        "github.com/etherlabsio/healthcheck"
+        "github.com/etherlabsio/healthcheck/checkers"
+        _ "github.com/go-sql-driver/mysql"
+        "github.com/gorilla/mux"
+    )
 
     func main() {
-        r := mux.New
+        db, err := sql.Open("mysql", "user:password@/dbname")
+        if err != nil {
+            panic(err.Error()) // Just for example purpose. You should use proper error handling instead of panic
+        }
+        defer db.Close()
+
+        r := mux.NewRouter()
+        r.Handle("/healthcheck", healthcheck.Handler(
+            healthcheck.WithChecker(
+                "heartbeat", checkers.Heartbeat("$PROJECT_PATH/heartbeat"),
+            ),
+            healthcheck.WithChecker(
+                "database", healthcheck.CheckerFunc(func() error {
+                    return db.Ping()
+                }),
+            ),
+        ))
+        http.ListenAndServe(":8080", r)
     }
+```
+
+Based on the example provided above, `curl localhost:8080/healthcheck | jq` should yield in a response in case of errors with an HTTP statusCode of `503`.
+
+``` JSON
+{
+  "status": "Service Unavailable",
+  "errors": {
+    "database": "dial tcp 127.0.0.1:3306: getsockopt: connection refused",
+    "heartbeat": "heartbeat not found. application should be out of rotation"
+  }
+}
 ```
