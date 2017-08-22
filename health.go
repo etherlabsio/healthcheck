@@ -28,13 +28,18 @@ type (
 	CheckerFunc func() error
 )
 
-// HandlerFunc returns a http.Handler
-func HandlerFunc(opts ...Option) http.HandlerFunc {
-	h := health{make(map[string]Checker)}
+// Handler returns an http.Handler
+func Handler(opts ...Option) http.Handler {
+	h := &health{make(map[string]Checker)}
 	for _, opt := range opts {
-		opt(&h)
+		opt(h)
 	}
-	return h.ServeHTTP
+	return h
+}
+
+// HandlerFunc returns an http.HandlerFunc to mount the API implementation at a specific route
+func HandlerFunc(opts ...Option) http.HandlerFunc {
+	return Handler(opts...).ServeHTTP
 }
 
 // Check Implements the Checker interface to allow for any func() error method
@@ -50,7 +55,7 @@ func WithChecker(name string, s Checker) Option {
 	}
 }
 
-func (h health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	code := http.StatusOK
 	errorMsgs := make(map[string]string, len(h.checkers))
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
