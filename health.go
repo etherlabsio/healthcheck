@@ -7,7 +7,8 @@ import (
 
 type (
 	health struct {
-		checkers map[string]Checker
+		checkers  map[string]Checker
+		observers map[string]Checker
 	}
 
 	response struct {
@@ -30,7 +31,11 @@ type (
 
 // Handler returns an http.Handler
 func Handler(opts ...Option) http.Handler {
-	h := &health{make(map[string]Checker)}
+	h := &health{
+		make(map[string]Checker),
+		make(map[string]Checker),
+	}
+
 	for _, opt := range opts {
 		opt(h)
 	}
@@ -55,6 +60,13 @@ func WithChecker(name string, s Checker) Option {
 	}
 }
 
+// WithObserver adds a status checker but it does not fail the whole status
+func WithObserver(name string, s Checker) Option {
+	return func(h *health) {
+		h.observers[name] = s
+	}
+}
+
 func (h *health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	code := http.StatusOK
 	errorMsgs := make(map[string]string, len(h.checkers))
@@ -63,6 +75,11 @@ func (h *health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err := checker.Check(); err != nil {
 			errorMsgs[key] = err.Error()
 			code = http.StatusServiceUnavailable
+		}
+	}
+	for key, observer := range h.observers {
+		if err := observer.Check(); err != nil {
+			errorMsgs[key] = err.Error()
 		}
 	}
 	w.WriteHeader(code)
