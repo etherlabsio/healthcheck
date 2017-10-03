@@ -41,6 +41,9 @@ Implementing the `Checker` interface and passing it on to healthcheck allows you
                     return db.Ping()
                 }),
             ),
+            healthcheck.WithObserver( // It won't fail the whole status
+                "metrics", checkers.Heartbeat("$PROJECT_PATH/metrics"),
+            ),
         ))
         http.ListenAndServe(":8080", r)
     }
