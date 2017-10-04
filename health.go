@@ -32,8 +32,8 @@ type (
 // Handler returns an http.Handler
 func Handler(opts ...Option) http.Handler {
 	h := &health{
-		make(map[string]Checker),
-		make(map[string]Checker),
+		checkers:  make(map[string]Checker),
+		observers: make(map[string]Checker),
 	}
 
 	for _, opt := range opts {
