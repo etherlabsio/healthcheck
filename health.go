@@ -3,6 +3,7 @@ package healthcheck
 import (
 	"encoding/json"
 	"net/http"
+	"sync"
 )
 
 type (
@@ -69,19 +70,33 @@ func WithObserver(name string, s Checker) Option {
 
 func (h *health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	code := http.StatusOK
-	errorMsgs := make(map[string]string, len(h.checkers))
+	errorMsgs := make(map[string]string)
+	var mutex sync.Mutex
+	var wg sync.WaitGroup
+	wg.Add(len(h.checkers) + len(h.observers))
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	for key, checker := range h.checkers {
-		if err := checker.Check(); err != nil {
-			errorMsgs[key] = err.Error()
-			code = http.StatusServiceUnavailable
-		}
+		go func(key string, checker Checker) {
+			if err := checker.Check(); err != nil {
+				mutex.Lock()
+				errorMsgs[key] = err.Error()
+				code = http.StatusServiceUnavailable
+				mutex.Unlock()
+			}
+			wg.Done()
+		}(key, checker)
 	}
 	for key, observer := range h.observers {
-		if err := observer.Check(); err != nil {
-			errorMsgs[key] = err.Error()
-		}
+		go func(key string, checker Checker) {
+			if err := observer.Check(); err != nil {
+				mutex.Lock()
+				errorMsgs[key] = err.Error()
+				mutex.Unlock()
+			}
+			wg.Done()
+		}(key, observer)
 	}
+	wg.Wait()
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(response{
 		Status: http.StatusText(code),
