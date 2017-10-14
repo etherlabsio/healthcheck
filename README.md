@@ -60,3 +60,6 @@ Based on the example provided above, `curl localhost:8080/healthcheck | jq` shou
   }
 }
 ```
+## License
+
+This project is licensed under the terms of the MIT license. See the [LICENSE](LICENSE) file.
