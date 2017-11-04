@@ -6,13 +6,12 @@ jobs:
   build:
     docker:
       # specify the version
-      - image: circleci/golang:1.8
-
+      - image: circleci/golang:1.9
     working_directory: /go/src/github.com/etherlabs.io/healthcheck
     steps:
       - checkout
 
       # specify any bash command here prefixed with `run: `
-      - run: mkdir -p $CIRCLE_ARTIFACTS/golang-1.8
-      - run: go test -race -coverprofile cover.out
-      - run: mv coverage.out $CIRCLE_ARTIFACTS/golang-1.8/coverage-report
+      - run: go get -v -t -d github.com/etherlabs.io/healthcheck
+      - run: go test -race -coverprofile=coverage.txt -covermode=atomic
+      - run: bash <(curl -s https://codecov.io/bash)
