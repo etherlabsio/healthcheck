@@ -13,6 +13,5 @@ jobs:
 
       # specify any bash command here prefixed with `run: `
       - run: go get -v -t -d github.com/etherlabs.io/healthcheck
-      - run: mkdir -p $CIRCLE_ARTIFACTS/golang-1.9
-      - run: go test -race -coverprofile cover.out
-      - run: mv coverage.out $CIRCLE_ARTIFACTS/golang-1.9/coverage-report
+      - run: go test -race -coverprofile=coverage.txt -covermode=atomic
+      - run: bash <(curl -s https://codecov.io/bash)
