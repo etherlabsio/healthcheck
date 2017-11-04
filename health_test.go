@@ -1,12 +1,14 @@
 package healthcheck
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestNewHandlerFunc(t *testing.T) {
@@ -30,10 +32,10 @@ func TestNewHandlerFunc(t *testing.T) {
 			name:       "returns 503 status if errors",
 			statusCode: http.StatusServiceUnavailable,
 			args: []Option{
-				WithChecker("database", CheckerFunc(func() error {
+				WithChecker("database", CheckerFunc(func(ctx context.Context) error {
 					return fmt.Errorf("connection to db timed out")
 				})),
-				WithChecker("testService", CheckerFunc(func() error {
+				WithChecker("testService", CheckerFunc(func(ctx context.Context) error {
 					return fmt.Errorf("connection refused")
 				})),
 			},
@@ -46,10 +48,27 @@ func TestNewHandlerFunc(t *testing.T) {
 			},
 		},
 		{
+			name:       "returns 503 status if checkers timeout",
+			statusCode: http.StatusServiceUnavailable,
+			args: []Option{
+				WithTimeout(1 * time.Millisecond),
+				WithChecker("database", CheckerFunc(func(ctx context.Context) error {
+					time.Sleep(10 * time.Millisecond)
+					return nil
+				})),
+			},
+			response: response{
+				Status: http.StatusText(http.StatusServiceUnavailable),
+				Errors: map[string]string{
+					"database": "max check time exceeded",
+				},
+			},
+		},
+		{
 			name:       "returns 200 status if errors are observable",
 			statusCode: http.StatusOK,
 			args: []Option{
-				WithObserver("observableService", CheckerFunc(func() error {
+				WithObserver("observableService", CheckerFunc(func(ctx context.Context) error {
 					return fmt.Errorf("i fail but it is okay")
 				})),
 			},
@@ -64,10 +83,10 @@ func TestNewHandlerFunc(t *testing.T) {
 			name:       "returns 503 status if errors with observable fails",
 			statusCode: http.StatusServiceUnavailable,
 			args: []Option{
-				WithObserver("database", CheckerFunc(func() error {
+				WithObserver("database", CheckerFunc(func(ctx context.Context) error {
 					return fmt.Errorf("connection to db timed out")
 				})),
-				WithChecker("testService", CheckerFunc(func() error {
+				WithChecker("testService", CheckerFunc(func(ctx context.Context) error {
 					return fmt.Errorf("connection refused")
 				})),
 			},

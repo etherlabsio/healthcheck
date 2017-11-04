@@ -1,6 +1,7 @@
 package checkers
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -13,7 +14,7 @@ type heartbeat struct {
 	path string
 }
 
-func (h *heartbeat) Check() error {
+func (h *heartbeat) Check(ctx context.Context) error {
 	if _, err := os.Stat(h.path); err != nil {
 		return errors.New("heartbeat not found. application should be out of rotation")
 	}
