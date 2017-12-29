@@ -29,14 +29,14 @@ func (ds *diskspace) Check(ctx context.Context) error {
 	total := fs.Blocks * uint64(fs.Bsize)
 	free := fs.Bfree * uint64(fs.Bsize)
 	used := total - free
-
-	if 100*used/total > ds.threshold {
-		return fmt.Errorf("space used on %s greater than threshold %d%%(%d%%)", ds.dir, ds.threshold, 100*used/total)
+	usedPercentage := 100 * used / total
+	if usedPercentage > ds.threshold {
+		return fmt.Errorf("used: %d%% threshold: %d%% location: %s", usedPercentage, ds.threshold, ds.dir)
 	}
 	return nil
 }
 
-// DiskSpace returns a diskspace health checker, which checks if filesystem usage is above threshold
+// DiskSpace returns a diskspace health checker, which checks if filesystem usage is above the threshold which is defined in percentage.
 func DiskSpace(dir string, threshold uint64) healthcheck.Checker {
 	return &diskspace{
 		dir:       dir,

@@ -1,4 +1,5 @@
 # Healthcheck
+
 [![CircleCI](https://circleci.com/gh/etherlabsio/healthcheck/tree/master.svg?style=shield)](https://circleci.com/gh/etherlabsio/healthcheck/tree/master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/etherlabsio/healthcheck)](https://goreportcard.com/report/github.com/etherlabsio/healthcheck)
 [![GoDoc](https://godoc.org/github.com/etherlabsio/healthcheck?status.svg)](https://godoc.org/github.com/etherlabsio/healthcheck)
@@ -16,46 +17,58 @@ Implementing the `Checker` interface and passing it on to healthcheck allows you
 ## Example
 
 ```GO
-    package main
+package main
 
-    import (
-        "database/sql"
-        "net/http"
+import (
+    "context"
+    "database/sql"
+    "net/http"
+    "time"
 
-        "github.com/etherlabsio/healthcheck"
-        "github.com/etherlabsio/healthcheck/checkers"
-        _ "github.com/go-sql-driver/mysql"
-        "github.com/gorilla/mux"
-    )
+    "github.com/etherlabsio/healthcheck"
+    "github.com/etherlabsio/healthcheck/checkers"
+    _ "github.com/go-sql-driver/mysql"
+    "github.com/gorilla/mux"
+)
 
-    func main() {
-        db, err := sql.Open("mysql", "user:password@/dbname")
-        if err != nil {
-            panic(err.Error()) // Just for example purpose. You should use proper error handling instead of panic
-        }
-        defer db.Close()
+func main() {
+    // For brevity, error check is being omitted here.
+    db, _ := sql.Open("mysql", "user:password@/dbname")
+    defer db.Close()
 
-        r := mux.NewRouter()
-        r.Handle("/healthcheck", healthcheck.Handler(
-            healthcheck.WithChecker(
-                "heartbeat", checkers.Heartbeat("$PROJECT_PATH/heartbeat"),
+    r := mux.NewRouter()
+    r.Handle("/healthcheck", healthcheck.Handler(
+
+        // WithTimeout allows you to set a max overall timeout.
+        healthcheck.WithTimeout(5*time.Second),
+
+        // Checkers fail the status in case of any error.
+        healthcheck.WithChecker(
+            // Heartbeat checks
+            "heartbeat", checkers.Heartbeat("$PROJECT_PATH/heartbeat"),
+        ),
+
+        healthcheck.WithChecker(
+            "database", healthcheck.CheckerFunc(
+                func(ctx context.Context) error {
+                    return db.PingContext(ctx)
+                },
             ),
-            healthcheck.WithChecker(
-                "database", healthcheck.CheckerFunc(func() error {
-                    return db.Ping()
-                }),
-            ),
-            healthcheck.WithObserver( // It won't fail the whole status
-                "metrics", checkers.Heartbeat("$PROJECT_PATH/metrics"),
-            ),
-        ))
-        http.ListenAndServe(":8080", r)
-    }
+        ),
+
+        // Observers do not fail the status in case of error.
+        healthcheck.WithObserver(
+            "diskspace", checkers.DiskSpace("/var/log", 90),
+        ),
+    ))
+
+    http.ListenAndServe(":8080", r)
+}
 ```
 
 Based on the example provided above, `curl localhost:8080/healthcheck | jq` should yield on error a response with an HTTP statusCode of `503`.
 
-``` JSON
+```JSON
 {
   "status": "Service Unavailable",
   "errors": {
@@ -64,6 +77,7 @@ Based on the example provided above, `curl localhost:8080/healthcheck | jq` shou
   }
 }
 ```
+
 ## License
 
 This project is licensed under the terms of the MIT license. See the [LICENSE](LICENSE) file.
