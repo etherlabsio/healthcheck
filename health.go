@@ -30,7 +30,7 @@ type (
 		Check(ctx context.Context) error
 	}
 
-	// CheckerFunc is a convenience type to create functions that implement the Checker interface. Shoutout to https://github.com/docker/go-healthcheck for this tip :)
+	// CheckerFunc is a convenience type to create functions that implement the Checker interface.
 	CheckerFunc func(ctx context.Context) error
 )
 
@@ -65,14 +65,14 @@ func WithChecker(name string, s Checker) Option {
 	}
 }
 
-// WithObserver adds a status checker but it does not fail the whole status
+// WithObserver adds a status checker but it does not fail the entire status.
 func WithObserver(name string, s Checker) Option {
 	return func(h *health) {
 		h.observers[name] = &timeoutChecker{s}
 	}
 }
 
-// WithTimeout configures the global timeout for individual checkers
+// WithTimeout configures the global timeout for all individual checkers.
 func WithTimeout(timeout time.Duration) Option {
 	return func(h *health) {
 		h.timeout = timeout
