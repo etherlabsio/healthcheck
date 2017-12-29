@@ -44,7 +44,6 @@ func main() {
 
         // Checkers fail the status in case of any error.
         healthcheck.WithChecker(
-            // Heartbeat checks
             "heartbeat", checkers.Heartbeat("$PROJECT_PATH/heartbeat"),
         ),
 
