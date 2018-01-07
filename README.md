@@ -5,6 +5,8 @@
 [![GoDoc](https://godoc.org/github.com/etherlabsio/healthcheck?status.svg)](https://godoc.org/github.com/etherlabsio/healthcheck)
 [![codecov](https://codecov.io/gh/etherlabsio/healthcheck/branch/master/graph/badge.svg)](https://codecov.io/gh/etherlabsio/healthcheck)
 
+![alt text](logo.png "gopher-logo")
+
 A simple and extensible RESTful Healthcheck API implementation for Go services.
 
 Health provides an `http.Handlefunc` for use as a healthcheck endpoint used by external services or load balancers
