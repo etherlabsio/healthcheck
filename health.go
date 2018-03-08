@@ -86,7 +86,7 @@ func (h *health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	errorMsgs := make(map[string]string, nCheckers)
 
 	ctx, cancel := context.Background(), func() {}
-	if h.timeout != 0 {
+	if h.timeout > 0 {
 		ctx, cancel = context.WithTimeout(ctx, h.timeout)
 	}
 	defer cancel()
