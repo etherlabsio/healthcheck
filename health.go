@@ -39,6 +39,7 @@ func Handler(opts ...Option) http.Handler {
 	h := &health{
 		checkers:  make(map[string]Checker),
 		observers: make(map[string]Checker),
+		timeout:   30 * time.Second,
 	}
 
 	for _, opt := range opts {
