@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+type response struct {
+	Status string            `json:"status,omitempty"`
+	Errors map[string]string `json:"errors,omitempty"`
+}
+
 type health struct {
 	checkers  map[string]Checker
 	observers map[string]Checker
@@ -114,15 +119,10 @@ func (h *health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(
-		struct {
-			Status string            `json:"status,omitempty"`
-			Errors map[string]string `json:"errors,omitempty"`
-		}{
-			Status: http.StatusText(code),
-			Errors: errorMsgs,
-		},
-	)
+	json.NewEncoder(w).Encode(response{
+		Status: http.StatusText(code),
+		Errors: errorMsgs,
+	})
 }
 
 type timeoutChecker struct {
