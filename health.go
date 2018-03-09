@@ -9,38 +9,39 @@ import (
 	"time"
 )
 
-type (
-	health struct {
-		checkers  map[string]Checker
-		observers map[string]Checker
-		timeout   time.Duration
-	}
+type response struct {
+	Status string            `json:"status,omitempty"`
+	Errors map[string]string `json:"errors,omitempty"`
+}
 
-	response struct {
-		Status string            `json:"status,omitempty"`
-		Errors map[string]string `json:"errors,omitempty"`
-	}
+type health struct {
+	checkers  map[string]Checker
+	observers map[string]Checker
+	timeout   time.Duration
+}
 
-	// Option adds optional parameter for the HealthcheckHandlerFunc
-	Option func(*health)
+// Checker checks the status of the dependency and returns error.
+// In case the dependency is working as expected, return nil.
+type Checker interface {
+	Check(ctx context.Context) error
+}
 
-	// Checker checks the status of the dependency and returns error.
-	// In case the dependency is working as expected, return nil.
-	Checker interface {
-		Check(ctx context.Context) error
-	}
+// CheckerFunc is a convenience type to create functions that implement the Checker interface.
+type CheckerFunc func(ctx context.Context) error
 
-	// CheckerFunc is a convenience type to create functions that implement the Checker interface.
-	CheckerFunc func(ctx context.Context) error
-)
+// Check Implements the Checker interface to allow for any func() error method
+// to be passed as a Checker
+func (c CheckerFunc) Check(ctx context.Context) error {
+	return c(ctx)
+}
 
 // Handler returns an http.Handler
 func Handler(opts ...Option) http.Handler {
 	h := &health{
 		checkers:  make(map[string]Checker),
 		observers: make(map[string]Checker),
+		timeout:   30 * time.Second,
 	}
-
 	for _, opt := range opts {
 		opt(h)
 	}
@@ -52,11 +53,8 @@ func HandlerFunc(opts ...Option) http.HandlerFunc {
 	return Handler(opts...).ServeHTTP
 }
 
-// Check Implements the Checker interface to allow for any func() error method
-// to be passed as a Checker
-func (c CheckerFunc) Check(ctx context.Context) error {
-	return c(ctx)
-}
+// Option adds optional parameter for the HealthcheckHandlerFunc
+type Option func(*health)
 
 // WithChecker adds a status checker that needs to be added as part of healthcheck. i.e database, cache or any external dependency
 func WithChecker(name string, s Checker) Option {
