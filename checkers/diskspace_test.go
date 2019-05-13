@@ -30,7 +30,7 @@ func Test_diskspace_Check(t *testing.T) {
 			80,
 			100,
 			0,
-			fmt.Errorf("space used on / greater than threshold 80%%(100%%)"),
+			fmt.Errorf("used: 100%% threshold: 80%% location: /"),
 		},
 		{
 			"Filesystem at 50%. Threshold 60%",
@@ -46,7 +46,7 @@ func Test_diskspace_Check(t *testing.T) {
 			40,
 			100,
 			50,
-			fmt.Errorf("space used on / greater than threshold 40%%(50%%)"),
+			fmt.Errorf("used: 50%% threshold: 40%% location: /"),
 		},
 	}
 	for _, tt := range tests {
@@ -63,7 +63,7 @@ func Test_diskspace_Check(t *testing.T) {
 			}
 			if err := ds.Check(context.Background()); err != tt.err {
 				if err == nil || tt.err == nil || err.Error() != tt.err.Error() {
-					t.Errorf("diskspace.Check() error = %v, wantErr %v", err, tt.err)
+					t.Errorf("diskspace.Check() returned error = \"%v\" but expected \"%v\"", err, tt.err)
 				}
 			}
 		})
