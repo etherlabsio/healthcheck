@@ -1,3 +1,3 @@
-module github.com/vthiery/healthcheck
+module github.com/etherlabsio/healthcheck
 
 go 1.12
