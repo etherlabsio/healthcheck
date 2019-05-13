@@ -1,6 +1,7 @@
 package checkers
 
 import (
+	"context"
 	"fmt"
 	"syscall"
 	"testing"
@@ -60,8 +61,7 @@ func Test_diskspace_Check(t *testing.T) {
 					return nil
 				},
 			}
-
-			if err := ds.Check(); err != tt.err {
+			if err := ds.Check(context.Background()); err != tt.err {
 				if err == nil || tt.err == nil || err.Error() != tt.err.Error() {
 					t.Errorf("diskspace.Check() error = %v, wantErr %v", err, tt.err)
 				}
