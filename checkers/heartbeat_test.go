@@ -1,6 +1,7 @@
 package checkers
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -54,8 +55,8 @@ func Test_heartbeat_Check(t *testing.T) {
 			h := &heartbeat{
 				path: tt.fields.path,
 			}
-			if err := h.Check(); (err != nil) != tt.wantErr {
-				t.Errorf("heartbeat.Check() error = %v, wantErr %v", err, tt.wantErr)
+			if err := h.Check(context.Background()); (err != nil) != tt.wantErr {
+				t.Errorf("heartbeat.Check() returned error = %v but expected %v", err, tt.wantErr)
 			}
 		})
 	}
