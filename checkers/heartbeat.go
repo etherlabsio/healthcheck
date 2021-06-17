@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/etherlabsio/healthcheck"
+	"github.com/etherlabsio/healthcheck/v2"
 )
 
 type heartbeat struct {

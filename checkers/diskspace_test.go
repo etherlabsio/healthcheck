@@ -3,9 +3,8 @@ package checkers
 import (
 	"context"
 	"fmt"
+	"syscall"
 	"testing"
-
-	"golang.org/x/sys/unix"
 )
 
 func Test_diskspace_Check(t *testing.T) {
@@ -55,7 +54,7 @@ func Test_diskspace_Check(t *testing.T) {
 			ds := &diskspace{
 				dir:       tt.dir,
 				threshold: tt.threshold,
-				statfs: func(fs string, stat *unix.Statfs_t) error {
+				statfs: func(fs string, stat *syscall.Statfs_t) error {
 					stat.Bsize = 1
 					stat.Bfree = tt.freeBlocks
 					stat.Blocks = tt.totalBlocks

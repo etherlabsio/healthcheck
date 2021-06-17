@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/etherlabsio/healthcheck"
-	"golang.org/x/sys/unix"
+	"syscall"
+
+	"github.com/etherlabsio/healthcheck/v2"
 )
 
 type diskspace struct {
 	dir       string
 	threshold uint64
-	statfs    func(string, *unix.Statfs_t) error
+	statfs    func(string, *syscall.Statfs_t) error
 }
 
 //Check test if the filesystem disk usage is above threshold
@@ -21,7 +22,7 @@ func (ds *diskspace) Check(ctx context.Context) error {
 		return fmt.Errorf("filesystem not found: %v", err)
 	}
 
-	fs := unix.Statfs_t{}
+	fs := syscall.Statfs_t{}
 	err := ds.statfs(ds.dir, &fs)
 	if err != nil {
 		return fmt.Errorf("error looking for %s filesystem stats: %v", ds.dir, err)
@@ -42,6 +43,6 @@ func DiskSpace(dir string, threshold uint64) healthcheck.Checker {
 	return &diskspace{
 		dir:       dir,
 		threshold: threshold,
-		statfs:    unix.Statfs,
+		statfs:    syscall.Statfs,
 	}
 }
